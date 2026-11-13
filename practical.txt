@@ -1,0 +1,45 @@
+
+Procedure
+
+
+Part A: Configure Active Directory Domain Services (AD DS)
+
+1. Open Server Manager: Start the Windows Server 2022 virtual machine and navigate to Server Manager → Add Roles and Features.
+2. Install AD DS: Select Role-based or feature-based installation, choose the local server, select Active Directory Domain Services (AD DS), click Add Features, and click Install.
+3. Promote to Domain Controller: Once installation finishes, click the notification flag in Server Manager and select Promote this server to a domain controller.
+4. Configure Forest: Select Add a new forest, enter the root domain name (e.g., dfis.local), set a Directory Services Restore Mode (DSRM) password, complete the wizard, and allow the server to restart.
+5. Verify Domain Controller: Log back into the server using the domain administrator account (DFIS\Administrator) and verify that the server is functioning as a Domain Controller for dfis.local.
+
+Part B: Install and Configure DNS
+
+1. Open DNS Manager: Navigate to Server Manager → Tools → DNS.
+2. Verify Lookup Zones: Expand SERVER01 → Forward Lookup Zones and verify that the dfis.local zone and the server's Host (A) record (192.168.1.10) exist. Check Reverse Lookup Zones to confirm awareness of PTR records (IP-to-hostname mapping).
+3. Test Server Name Resolution: Open Command Prompt and run ping SERVER01 to verify that the hostname resolves to its IP address.
+4. Add a New Host (A) Record: In DNS Manager, right-click dfis.local and select New Host (A or AAAA). Enter test1234 as the Name and 192.168.1.10 as the IP address, then click Add Host.
+5. Flush Cache and Test Record: Open Command Prompt, run ipconfig /flushdns to clear cached entries, and run ping test1234 to verify the new record resolves properly.
+6. Configure DNS Interfaces: Right-click SERVER01 in DNS Manager, select Properties → Interfaces, select Only the following IP addresses, check 192.168.1.10, and click Apply → OK.
+
+Part C: Install and Configure DHCP
+
+1. Install DHCP Role: Go to Server Manager → Add Roles and Features, select DHCP Server, click Add Features, and click Install. (Complete the post-deployment DHCP authorization if prompted).
+2. Open DHCP Manager: Navigate to Server Manager → Tools → DHCP and expand SERVER01 → IPv4.
+3. Create a DHCP Scope: Right-click IPv4 and select New Scope. Name the scope (e.g., Test Scope) and define the IP range:
+	• Start IP Address: 192.168.1.100
+	• End IP Address: 192.168.1.200
+	• Subnet Mask: 255.255.255.0
+4. Configure Scope Options: Enter the Default Gateway, set the DNS Server to 192.168.1.10, and set the Parent Domain to dfis.local.
+5. Activate Scope: Select Yes, I want to activate this scope now and finish the wizard.
+6. Verify on Client: On the client VM, set the network adapter to Obtain an IP address automatically. Open Command Prompt and run ipconfig /release, followed by ipconfig /renew, and then ipconfig to confirm the client received an IP address between 192.168.1.100 and 192.168.1.200.
+
+Part D: Install FTP Server
+
+1. Install IIS and FTP Service: Go to Server Manager → Add Roles and Features, select Web Server (IIS), expand FTP Server under Role Services, select FTP Service, and click Install.
+2. Verify FTP Installation: Open Server Manager → Tools → Internet Information Services (IIS) Manager and confirm that FTP features are available (operating on default port 21).
+3. Manage User Accounts: Because the server is a Domain Controller, local user management is disabled. Manage or create any required FTP user accounts centrally through Server Manager → Tools → Active Directory Users and Computers (ADUC).
+
+Part E: Test Network Connectivity
+
+1. Verify Server IP: Run ipconfig in Command Prompt on the server to confirm the static IP (192.168.1.10).
+2. Test Basic Connectivity: Run ping 192.168.1.10 from the client machine to verify network reachability.
+3. Test DNS Resolution: Run nslookup dfis.local on the client to confirm the DNS server resolves the domain name.
+4. Confirm DHCP & FTP: Re-verify client IP lease via ipconfig and confirm the FTP service status inside IIS Manager.
